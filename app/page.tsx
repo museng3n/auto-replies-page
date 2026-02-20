@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -148,6 +148,15 @@ export default function AutoRepliesPage() {
   const [isTestModalOpen, setIsTestModalOpen] = useState(false)
   const [selectedReply, setSelectedReply] = useState<any>(null)
   const [newKeyword, setNewKeyword] = useState("")
+
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search)
+    const urlToken = urlParams.get('token')
+    if (urlToken) {
+      localStorage.setItem('authToken', urlToken)
+      window.history.replaceState({}, '', window.location.pathname)
+    }
+  }, [])
 
   // Form state
   const [formData, setFormData] = useState({
