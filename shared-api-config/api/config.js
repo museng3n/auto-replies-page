@@ -1,7 +1,7 @@
 // API Configuration
 const API_CONFIG = {
   baseURL: 'https://triggerio-backend.onrender.com/api',
-  timeout: 30000,
+  timeout: 90000,
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
