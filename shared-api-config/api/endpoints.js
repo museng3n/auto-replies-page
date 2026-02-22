@@ -49,6 +49,12 @@ const ENDPOINTS = {
     STATS: (id) => `/automation/${id}/stats`,
     LOGS: (id) => `/automation/${id}/logs`,
   },
+  AUTO_RESPONSES: {
+    BASE: '/auto-responses',
+    BY_ID: (id) => `/auto-responses/${id}`,
+    TOGGLE: (id) => `/auto-responses/${id}/toggle`,
+    TEST: (id) => `/auto-responses/${id}/test`,
+  },
   SOCIAL: {
     INSTAGRAM: {
       CONNECT: '/social/instagram/connect',

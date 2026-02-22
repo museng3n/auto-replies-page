@@ -16,8 +16,12 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
+// @ts-ignore
+import { apiClient } from "@/shared-api-config/api/client"
+// @ts-ignore
+import ENDPOINTS from "@/shared-api-config/api/endpoints"
 
-// Sample data
+// Sample data (fallback)
 const sampleAutoReplies = [
   {
     id: 1,
@@ -148,6 +152,8 @@ export default function AutoRepliesPage() {
   const [isTestModalOpen, setIsTestModalOpen] = useState(false)
   const [selectedReply, setSelectedReply] = useState<any>(null)
   const [newKeyword, setNewKeyword] = useState("")
+  const [saving, setSaving] = useState(false)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search)
@@ -156,7 +162,89 @@ export default function AutoRepliesPage() {
       localStorage.setItem('triggerio_token', urlToken)
       window.history.replaceState({}, '', window.location.pathname)
     }
+    fetchAutoReplies()
   }, [])
+
+  const fetchAutoReplies = async () => {
+    try {
+      setLoading(true)
+      const response = await apiClient.get(ENDPOINTS.AUTO_RESPONSES.BASE)
+      const data = response.data?.data?.autoResponses || response.data?.data || []
+      if (Array.isArray(data) && data.length > 0) {
+        const mapped = data.map((r: any) => ({
+          id: r._id || r.id,
+          name: r.name || "",
+          keywords: r.triggers?.keywords || [],
+          platform: r.platforms?.length === 2 ? "both" : r.platforms?.[0] || "both",
+          matchType: r.triggers?.matchType || "contains",
+          caseSensitive: r.triggers?.caseSensitive || false,
+          replyMessage: r.responseText || "",
+          delay: r.delay || 0,
+          createContact: r.createContact !== false,
+          status: r.isActive ? "active" : "inactive",
+          stats: r.stats || { triggered: 0, sent: 0, failed: 0 },
+          createdAt: r.createdAt || "",
+          updatedAt: r.updatedAt || "",
+        }))
+        setAutoReplies(mapped)
+      }
+    } catch (err: any) {
+      console.error("Failed to fetch auto-replies:", err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleSave = async () => {
+    if (!formData.name.trim()) return alert("الاسم مطلوب")
+    if (formData.keywords.length === 0) return alert("أضف كلمة مفتاحية واحدة على الأقل")
+    if (!formData.replyMessage.trim()) return alert("رسالة الرد مطلوبة")
+
+    setSaving(true)
+    try {
+      const payload = {
+        name: formData.name,
+        description: formData.description,
+        responseText: formData.replyMessage,
+        platforms: formData.platform === "both" ? ["facebook", "instagram"] : [formData.platform],
+        triggers: {
+          keywords: formData.keywords,
+          matchType: formData.matchType,
+          caseSensitive: formData.caseSensitive,
+        },
+        delay: formData.delay,
+        createContact: formData.createContact,
+        isActive: formData.status === "active",
+      }
+
+      if (selectedReply) {
+        await apiClient.put(ENDPOINTS.AUTO_RESPONSES.BY_ID(selectedReply.id), payload)
+      } else {
+        await apiClient.post(ENDPOINTS.AUTO_RESPONSES.BASE, payload)
+      }
+
+      setIsCreateModalOpen(false)
+      setSelectedReply(null)
+      setFormData({
+        name: "",
+        description: "",
+        platform: "both",
+        keywords: [],
+        matchType: "contains",
+        caseSensitive: false,
+        replyMessage: "",
+        delay: 2,
+        createContact: true,
+        status: "active",
+      })
+      fetchAutoReplies()
+    } catch (err: any) {
+      console.error("Failed to save auto-reply:", err)
+      alert(err.response?.data?.message || err.message || "فشل في حفظ الرد التلقائي")
+    } finally {
+      setSaving(false)
+    }
+  }
 
   // Form state
   const [formData, setFormData] = useState({
@@ -823,8 +911,8 @@ export default function AutoRepliesPage() {
             >
               إلغاء
             </Button>
-            <Button className="bg-[#7C3AED] hover:bg-[#6D28D9]">
-              {selectedReply ? "حفظ التغييرات" : "حفظ الرد التلقائي"}
+            <Button className="bg-[#7C3AED] hover:bg-[#6D28D9]" onClick={handleSave} disabled={saving}>
+              {saving ? "جاري الحفظ..." : selectedReply ? "حفظ التغييرات" : "حفظ الرد التلقائي"}
             </Button>
           </DialogFooter>
         </DialogContent>
