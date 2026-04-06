@@ -155,13 +155,21 @@ export default function AutoRepliesPage() {
   const [newKeyword, setNewKeyword] = useState("")
   const [saving, setSaving] = useState(false)
   const [loading, setLoading] = useState(true)
-  const [language, setLanguage] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const urlParams = new URLSearchParams(window.location.search)
-      return urlParams.get('lang') || localStorage.getItem('triggerio_language') || 'ar'
-    }
+  const [language, setLanguage] = useState<'ar' | 'en'>(() => {
+    if (typeof window === 'undefined') return 'ar'
+    const urlLang = new URLSearchParams(window.location.search).get('lang')
+    if (urlLang === 'ar' || urlLang === 'en') return urlLang as 'ar' | 'en'
+    const stored = localStorage.getItem('triggerio_language')
+    if (stored === 'ar' || stored === 'en') return stored as 'ar' | 'en'
     return 'ar'
   })
+
+  // Set document direction synchronously before first render
+  if (typeof document !== 'undefined') {
+    document.dir = language === 'ar' ? 'rtl' : 'ltr'
+    document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr'
+    document.body.dir = language === 'ar' ? 'rtl' : 'ltr'
+  }
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search)
