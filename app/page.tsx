@@ -339,7 +339,7 @@ export default function AutoRepliesPage() {
   const successRate = totalTriggered > 0 ? ((totalSentToday / totalTriggered) * 100).toFixed(1) : "0.0"
 
   return (
-    <div dir="rtl" className="min-h-screen bg-[#F3F4F6] p-6 md:p-8">
+    <div dir={language === 'ar' ? 'rtl' : 'ltr'} className="min-h-screen bg-[#F3F4F6] p-6 md:p-8">
       {/* Header */}
       <div className="max-w-7xl mx-auto mb-8">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
