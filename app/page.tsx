@@ -20,6 +20,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { apiClient } from "@/shared-api-config/api/client"
 // @ts-ignore
 import ENDPOINTS from "@/shared-api-config/api/endpoints"
+import { translations } from '../src/translations'
 
 // Sample data (fallback)
 const sampleAutoReplies = [
@@ -154,6 +155,13 @@ export default function AutoRepliesPage() {
   const [newKeyword, setNewKeyword] = useState("")
   const [saving, setSaving] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [language, setLanguage] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search)
+      return urlParams.get('lang') || localStorage.getItem('triggerio_language') || 'ar'
+    }
+    return 'ar'
+  })
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search)
@@ -163,6 +171,24 @@ export default function AutoRepliesPage() {
       window.history.replaceState({}, '', window.location.pathname)
     }
     fetchAutoReplies()
+  }, [])
+
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      document.dir = language === 'ar' ? 'rtl' : 'ltr'
+      document.documentElement.lang = language
+    }
+  }, [language])
+
+  useEffect(() => {
+    const handleMessage = (event) => {
+      if (event.data?.type === 'LANGUAGE_CHANGE') {
+        setLanguage(event.data.language)
+        if (typeof localStorage !== 'undefined') localStorage.setItem('triggerio_language', event.data.language)
+      }
+    }
+    window.addEventListener('message', handleMessage)
+    return () => window.removeEventListener('message', handleMessage)
   }, [])
 
   const fetchAutoReplies = async () => {
@@ -315,14 +341,14 @@ export default function AutoRepliesPage() {
       <div className="max-w-7xl mx-auto mb-8">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-[#1F2937] mb-2">الردود التلقائية</h1>
-            <p className="text-sm text-[#6B7280]">ردود سريعة على الكلمات المفتاحية | Quick replies to keywords</p>
+            <h1 className="text-3xl font-bold text-[#1F2937] mb-2">{translations[language].pageTitle}</h1>
+            <p className="text-sm text-[#6B7280]">{translations[language].pageSubtitle}</p>
           </div>
           <Button onClick={() => setIsCreateModalOpen(true)} className="bg-[#7C3AED] text-white transition-all duration-300 hover:bg-gradient-to-r hover:from-purple-400 hover:via-pink-400 hover:to-orange-300">
             <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
-            إنشاء رد تلقائي
+            {translations[language].createBtn}
           </Button>
         </div>
       </div>
@@ -344,9 +370,9 @@ export default function AutoRepliesPage() {
                   </svg>
                 </div>
                 <div className="text-3xl font-bold text-[#1F2937] mb-1">{totalActive}</div>
-                <div className="text-sm text-[#6B7280] mb-2">ردود نشطة | Active Replies</div>
+                <div className="text-sm text-[#6B7280] mb-2">{translations[language].activeReplies}</div>
                 <div className="text-xs text-green-600 flex items-center gap-1">
-                  <span>+2 this week</span>
+                  <span>+2 {translations[language].thisWeek}</span>
                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
                   </svg>
@@ -365,7 +391,7 @@ export default function AutoRepliesPage() {
                   </svg>
                 </div>
                 <div className="text-3xl font-bold text-[#1F2937] mb-1">{totalSentToday.toLocaleString()}</div>
-                <div className="text-sm text-[#6B7280] mb-2">أُرسل اليوم | Sent Today</div>
+                <div className="text-sm text-[#6B7280] mb-2">{translations[language].sentToday}</div>
                 <div className="text-xs text-green-600 flex items-center gap-1">
                   <span>+234</span>
                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -390,8 +416,8 @@ export default function AutoRepliesPage() {
                   </svg>
                 </div>
                 <div className="text-3xl font-bold text-[#1F2937] mb-1">{successRate}%</div>
-                <div className="text-sm text-[#6B7280] mb-2">معدل النجاح | Success Rate</div>
-                <div className="text-xs text-green-600">Excellent</div>
+                <div className="text-sm text-[#6B7280] mb-2">{translations[language].successRate}</div>
+                <div className="text-xs text-green-600">{translations[language].excellent}</div>
               </div>
             </div>
           </div>
@@ -415,7 +441,7 @@ export default function AutoRepliesPage() {
                 />
               </svg>
               <Input
-                placeholder="ابحث بالاسم، الكلمات المفتاحية..."
+                placeholder={translations[language].searchPlaceholder}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pr-10"
@@ -428,10 +454,10 @@ export default function AutoRepliesPage() {
                   <SelectValue placeholder="المنصة" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">الكل | All Platforms</SelectItem>
+                  <SelectItem value="all">{translations[language].allPlatforms}</SelectItem>
                   <SelectItem value="instagram">Instagram</SelectItem>
                   <SelectItem value="facebook">Facebook</SelectItem>
-                  <SelectItem value="both">كلاهما | Both</SelectItem>
+                  <SelectItem value="both">{translations[language].both}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -442,9 +468,9 @@ export default function AutoRepliesPage() {
                   <SelectValue placeholder="الحالة" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">الكل | All</SelectItem>
-                  <SelectItem value="active">نشط | Active</SelectItem>
-                  <SelectItem value="inactive">معطّل | Inactive</SelectItem>
+                  <SelectItem value="all">{translations[language].allStatus}</SelectItem>
+                  <SelectItem value="active">{translations[language].active}</SelectItem>
+                  <SelectItem value="inactive">{translations[language].inactive}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -453,7 +479,7 @@ export default function AutoRepliesPage() {
               <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
-              مسح الفلاتر
+              {translations[language].clearFilters}
             </Button>
           </div>
         </div>
@@ -466,19 +492,19 @@ export default function AutoRepliesPage() {
                 <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
                     <th className="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider w-[40%]">
-                      الاسم والكلمات المفتاحية
+                      {translations[language].nameAndKeywords}
                     </th>
                     <th className="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider w-[15%]">
-                      المنصة
+                      {translations[language].platformCol}
                     </th>
                     <th className="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider w-[15%]">
-                      الحالة
+                      {translations[language].statusCol}
                     </th>
                     <th className="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider w-[20%]">
-                      الإحصائيات
+                      {translations[language].stats}
                     </th>
                     <th className="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider w-[10%]">
-                      إجراءات
+                      {translations[language].actions}
                     </th>
                   </tr>
                 </thead>
@@ -499,7 +525,7 @@ export default function AutoRepliesPage() {
                           ))}
                           {reply.keywords.length > 3 && (
                             <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs bg-[#F3F4F6] border border-[#E5E7EB] text-[#6B7280]">
-                              +{reply.keywords.length - 3} more
+                              +{reply.keywords.length - 3} {translations[language].moreKeywords}
                             </span>
                           )}
                         </div>
@@ -528,7 +554,7 @@ export default function AutoRepliesPage() {
                             <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
                               <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM4.332 8.027a6.012 6.012 0 011.912-2.706C6.512 5.73 6.974 6 7.5 6A1.5 1.5 0 019 7.5V8a2 2 0 004 0 2 2 0 011.523-1.943A5.977 5.977 0 0116 10c0 .34-.028.675-.083 1H15a2 2 0 00-2 2v2.197A5.973 5.973 0 0110 16v-2a2 2 0 00-2-2 2 2 0 01-2-2 2 2 0 00-1.668-1.973z" clipRule="evenodd" />
                             </svg>
-                            كلاهما | Both
+                            {translations[language].both}
                           </span>
                         )}
                       </td>
@@ -552,9 +578,9 @@ export default function AutoRepliesPage() {
                       {/* Stats */}
                       <td className="px-6 py-4">
                         <div className="space-y-1 text-xs">
-                          <div className="text-gray-600">تفعيل: {reply.stats.triggered}</div>
-                          <div className="text-green-600">أرسل: {reply.stats.sent}</div>
-                          {reply.stats.failed > 0 && <div className="text-red-600">فشل: {reply.stats.failed}</div>}
+                          <div className="text-gray-600">{translations[language].triggered} {reply.stats.triggered}</div>
+                          <div className="text-green-600">{translations[language].sent} {reply.stats.sent}</div>
+                          {reply.stats.failed > 0 && <div className="text-red-600">{translations[language].failed} {reply.stats.failed}</div>}
                         </div>
                       </td>
 
@@ -595,7 +621,7 @@ export default function AutoRepliesPage() {
                                   d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
                                 />
                               </svg>
-                              تعديل
+                              {translations[language].edit}
                             </DropdownMenuItem>
                             <DropdownMenuItem
                               onClick={() => {
@@ -611,7 +637,7 @@ export default function AutoRepliesPage() {
                                   d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"
                                 />
                               </svg>
-                              اختبار
+                              {translations[language].test}
                             </DropdownMenuItem>
                             <DropdownMenuItem>
                               <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -622,7 +648,7 @@ export default function AutoRepliesPage() {
                                   d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
                                 />
                               </svg>
-                              نسخ
+                              {translations[language].copy}
                             </DropdownMenuItem>
                             <DropdownMenuItem className="text-red-600">
                               <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -633,7 +659,7 @@ export default function AutoRepliesPage() {
                                   d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
                                 />
                               </svg>
-                              حذف
+                              {translations[language].delete}
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -655,13 +681,13 @@ export default function AutoRepliesPage() {
                 d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
               />
             </svg>
-            <h3 className="text-2xl font-bold text-[#1F2937] mb-2">لا توجد ردود تلقائية</h3>
-            <p className="text-sm text-[#6B7280] mb-6">ابدأ بإنشاء أول رد تلقائي للكلمات المفتاحية</p>
+            <h3 className="text-2xl font-bold text-[#1F2937] mb-2">{translations[language].noReplies}</h3>
+            <p className="text-sm text-[#6B7280] mb-6">{translations[language].noRepliesSubtitle}</p>
             <Button onClick={() => setIsCreateModalOpen(true)} className="bg-[#7C3AED] text-white transition-all duration-300 hover:bg-gradient-to-r hover:from-purple-400 hover:via-pink-400 hover:to-orange-300">
               <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
-              إنشاء رد تلقائي
+              {translations[language].createBtn}
             </Button>
           </div>
         )}
@@ -672,18 +698,18 @@ export default function AutoRepliesPage() {
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" dir="rtl">
           <DialogHeader>
             <DialogTitle className="text-2xl font-bold text-right">
-              {selectedReply ? "تعديل الرد التلقائي" : "إنشاء رد تلقائي"}
+              {selectedReply ? translations[language].editModalTitle : translations[language].createModalTitle}
             </DialogTitle>
-            <DialogDescription className="text-right">أنشئ ردوداً تلقائية على الكلمات المفتاحية</DialogDescription>
+            <DialogDescription className="text-right">{translations[language].modalDescription}</DialogDescription>
           </DialogHeader>
 
           <div className="space-y-6 py-4">
             {/* Basic Information */}
             <div className="space-y-4">
-              <h3 className="font-semibold text-[#1F2937]">1️⃣ المعلومات الأساسية</h3>
+              <h3 className="font-semibold text-[#1F2937]">1️⃣ {translations[language].basicInfo}</h3>
 
               <div>
-                <Label htmlFor="name">الاسم *</Label>
+                <Label htmlFor="name">{translations[language].nameLabel}</Label>
                 <Input
                   id="name"
                   placeholder="مثال: Welcome Response"
@@ -693,10 +719,10 @@ export default function AutoRepliesPage() {
               </div>
 
               <div>
-                <Label htmlFor="description">الوصف (اختياري)</Label>
+                <Label htmlFor="description">{translations[language].descLabel}</Label>
                 <Textarea
                   id="description"
-                  placeholder="وصف مختصر..."
+                  placeholder={translations[language].descPlaceholder}
                   rows={2}
                   value={formData.description}
                   onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
@@ -706,7 +732,7 @@ export default function AutoRepliesPage() {
 
             {/* Platform */}
             <div className="space-y-4">
-              <h3 className="font-semibold text-[#1F2937]">2️⃣ المنصة</h3>
+              <h3 className="font-semibold text-[#1F2937]">2️⃣ {translations[language].platformSection}</h3>
               <div className="grid grid-cols-3 gap-3">
                 {["instagram", "facebook", "both"].map((platform) => (
                   <button
@@ -722,7 +748,7 @@ export default function AutoRepliesPage() {
                       <div className="font-medium mb-1">
                         {platform === "instagram" && "Instagram"}
                         {platform === "facebook" && "Facebook"}
-                        {platform === "both" && "كلاهما"}
+                        {platform === "both" && translations[language].both}
                       </div>
                       <div
                         className={`w-4 h-4 rounded-full mx-auto ${
@@ -739,13 +765,13 @@ export default function AutoRepliesPage() {
 
             {/* Keywords */}
             <div className="space-y-4">
-              <h3 className="font-semibold text-[#1F2937]">3️⃣ الكلمات المفتاحية</h3>
+              <h3 className="font-semibold text-[#1F2937]">3️⃣ {translations[language].keywordsSection}</h3>
 
               <div>
-                <Label>الكلمات المفتاحية *</Label>
+                <Label>{translations[language].keywordsLabel}</Label>
                 <div className="flex gap-2 mb-3">
                   <Input
-                    placeholder="أضف كلمة مفتاحية..."
+                    placeholder={translations[language].addKeywordPlaceholder}
                     value={newKeyword}
                     onChange={(e) => setNewKeyword(e.target.value)}
                     onKeyPress={(e) => {
@@ -756,7 +782,7 @@ export default function AutoRepliesPage() {
                     }}
                   />
                   <Button type="button" onClick={addKeyword} variant="outline">
-                    إضافة +
+                    {translations[language].addKeywordBtn}
                   </Button>
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -777,7 +803,7 @@ export default function AutoRepliesPage() {
               </div>
 
               <div>
-                <Label htmlFor="matchType">نوع المطابقة</Label>
+                <Label htmlFor="matchType">{translations[language].matchType}</Label>
                 <Select
                   value={formData.matchType}
                   onValueChange={(value) => setFormData((prev) => ({ ...prev, matchType: value }))}
@@ -786,10 +812,10 @@ export default function AutoRepliesPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="contains">يحتوي | Contains</SelectItem>
-                    <SelectItem value="exact">مطابقة تامة | Exact</SelectItem>
-                    <SelectItem value="starts_with">يبدأ بـ | Starts With</SelectItem>
-                    <SelectItem value="ends_with">ينتهي بـ | Ends With</SelectItem>
+                    <SelectItem value="contains">{translations[language].contains}</SelectItem>
+                    <SelectItem value="exact">{translations[language].exact}</SelectItem>
+                    <SelectItem value="starts_with">{translations[language].startsWith}</SelectItem>
+                    <SelectItem value="ends_with">{translations[language].endsWith}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -801,20 +827,20 @@ export default function AutoRepliesPage() {
                   onCheckedChange={(checked) => setFormData((prev) => ({ ...prev, caseSensitive: checked as boolean }))}
                 />
                 <Label htmlFor="caseSensitive" className="cursor-pointer">
-                  حساس لحالة الأحرف
+                  {translations[language].caseSensitive}
                 </Label>
               </div>
             </div>
 
             {/* Response Message */}
             <div className="space-y-4">
-              <h3 className="font-semibold text-[#1F2937]">4️⃣ رسالة الرد</h3>
+              <h3 className="font-semibold text-[#1F2937]">4️⃣ {translations[language].replySection}</h3>
 
               <div>
-                <Label htmlFor="replyMessage">الرسالة *</Label>
+                <Label htmlFor="replyMessage">{translations[language].replyLabel}</Label>
                 <Textarea
                   id="replyMessage"
-                  placeholder="مرحباً {{name}}! شكراً..."
+                  placeholder={translations[language].replyPlaceholder}
                   rows={6}
                   value={formData.replyMessage}
                   onChange={(e) => setFormData((prev) => ({ ...prev, replyMessage: e.target.value }))}
@@ -822,7 +848,7 @@ export default function AutoRepliesPage() {
                 />
                 <div className="flex justify-between items-center mt-2">
                   <p className="text-xs text-gray-500 italic">
-                    يمكنك استخدام: {"{"}
+                    {translations[language].replyHelper} {"{"}
                     {"{"} name{"}"}
                     {"}"}, {"{"}
                     {"{"} username{"}"}
@@ -843,7 +869,7 @@ export default function AutoRepliesPage() {
               </div>
 
               <div>
-                <Label htmlFor="delay">التأخير (بالثواني)</Label>
+                <Label htmlFor="delay">{translations[language].delayLabel}</Label>
                 <Input
                   id="delay"
                   type="number"
@@ -857,7 +883,7 @@ export default function AutoRepliesPage() {
 
             {/* Options */}
             <div className="space-y-4">
-              <h3 className="font-semibold text-[#1F2937]">5️⃣ الخيارات</h3>
+              <h3 className="font-semibold text-[#1F2937]">5️⃣ {translations[language].optionsSection}</h3>
 
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
@@ -869,7 +895,7 @@ export default function AutoRepliesPage() {
                     }
                   />
                   <Label htmlFor="createContact" className="cursor-pointer">
-                    إنشاء جهة اتصال تلقائياً
+                    {translations[language].autoCreateContact}
                   </Label>
                 </div>
 
@@ -882,7 +908,7 @@ export default function AutoRepliesPage() {
                     }
                   />
                   <Label htmlFor="status" className="cursor-pointer">
-                    تفعيل الرد التلقائي
+                    {translations[language].enableReply}
                   </Label>
                 </div>
               </div>
@@ -909,10 +935,10 @@ export default function AutoRepliesPage() {
                 })
               }}
             >
-              إلغاء
+              {translations[language].cancel}
             </Button>
             <Button className="bg-[#7C3AED] hover:bg-[#6D28D9]" onClick={handleSave} disabled={saving}>
-              {saving ? "جاري الحفظ..." : selectedReply ? "حفظ التغييرات" : "حفظ الرد التلقائي"}
+              {saving ? translations[language].saving : selectedReply ? translations[language].saveEdit : translations[language].saveCreate}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -923,13 +949,13 @@ export default function AutoRepliesPage() {
         <DialogContent className="max-w-lg" dir="rtl">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold text-right">
-              اختبار الرد التلقائي: {selectedReply?.name}
+              {translations[language].testModalTitle}: {selectedReply?.name}
             </DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
             <div>
-              <Label className="mb-2 block">المنصة:</Label>
+              <Label className="mb-2 block">{translations[language].testPlatformLabel}</Label>
               <div className="flex gap-3">
                 <button className="flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-gray-300">
                   <div className="w-4 h-4 rounded-full border-2 border-gray-400" />
@@ -945,16 +971,16 @@ export default function AutoRepliesPage() {
             </div>
 
             <div>
-              <Label htmlFor="testMessage">رسالة الاختبار:</Label>
+              <Label htmlFor="testMessage">{translations[language].testMessageLabel}</Label>
               <Input id="testMessage" placeholder="أدخل رسالة الاختبار..." defaultValue="hello" />
             </div>
 
             <div>
-              <Label htmlFor="senderName">اسم المرسل:</Label>
+              <Label htmlFor="senderName">{translations[language].testSenderLabel}</Label>
               <Input id="senderName" placeholder="Test User" defaultValue="Test User" />
             </div>
 
-            <Button className="w-full bg-[#7C3AED] hover:bg-[#6D28D9]">تشغيل الاختبار</Button>
+            <Button className="w-full bg-[#7C3AED] hover:bg-[#6D28D9]">{translations[language].runTest}</Button>
 
             {/* Test Result */}
             <div className="p-4 rounded-lg bg-green-50 border border-green-200">
@@ -966,11 +992,11 @@ export default function AutoRepliesPage() {
                     clipRule="evenodd"
                   />
                 </svg>
-                <span className="font-semibold text-green-800">تم العثور على مطابقة!</span>
+                <span className="font-semibold text-green-800">{translations[language].matchFound}</span>
               </div>
               <div className="space-y-2 text-sm text-green-800">
-                <p>الكلمة المطابقة: "hello"</p>
-                <p className="font-medium">الرد المرسل:</p>
+                <p>{translations[language].matchedKeyword} "hello"</p>
+                <p className="font-medium">{translations[language].replySent}</p>
                 <div className="p-3 rounded bg-white border border-green-200 text-gray-700 whitespace-pre-wrap">
                   {selectedReply?.replyMessage}
                 </div>
@@ -980,7 +1006,7 @@ export default function AutoRepliesPage() {
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsTestModalOpen(false)}>
-              إغلاق
+              {translations[language].close}
             </Button>
           </DialogFooter>
         </DialogContent>
