@@ -163,6 +163,18 @@ export default function AutoRepliesPage() {
     if (stored === 'ar' || stored === 'en') return stored as 'ar' | 'en'
     return 'ar'
   })
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    if (typeof window === 'undefined') return 'light';
+    const urlTheme = new URLSearchParams(window.location.search).get('theme');
+    if (urlTheme === 'light' || urlTheme === 'dark') return urlTheme as 'light' | 'dark';
+    const stored = localStorage.getItem('triggerio_theme');
+    if (stored === 'light' || stored === 'dark') return stored as 'light' | 'dark';
+    return 'light';
+  });
+
+  if (typeof document !== 'undefined') {
+    document.documentElement.setAttribute('data-theme', theme);
+  }
 
   // Set document direction synchronously before first render
   if (typeof document !== 'undefined') {
@@ -192,10 +204,18 @@ export default function AutoRepliesPage() {
   }, [language])
 
   useEffect(() => {
-    const handleMessage = (event) => {
+    const handleMessage = (event: MessageEvent) => {
       if (event.data?.type === 'LANGUAGE_CHANGE') {
         setLanguage(event.data.language)
         if (typeof localStorage !== 'undefined') localStorage.setItem('triggerio_language', event.data.language)
+      }
+      if (event.data?.type === 'THEME_CHANGE') {
+        const t = event.data.theme;
+        if (t === 'light' || t === 'dark') {
+          setTheme(t as 'light' | 'dark');
+          localStorage.setItem('triggerio_theme', t);
+          document.documentElement.setAttribute('data-theme', t);
+        }
       }
     }
     window.addEventListener('message', handleMessage)
@@ -346,14 +366,58 @@ export default function AutoRepliesPage() {
   const totalTriggered = autoReplies.reduce((sum, r) => sum + (r.stats?.triggered || 0), 0)
   const successRate = totalTriggered > 0 ? ((totalSentToday / totalTriggered) * 100).toFixed(1) : "0.0"
 
+  const colors = theme === 'dark' ? {
+    pageBg: '#11111b',
+    cardBg: '#1e1e2e',
+    cardBgHover: '#2a2a3c',
+    surfaceBg: '#313244',
+    text: '#cdd6f4',
+    textSecondary: '#a6adc8',
+    textMuted: '#6c7086',
+    heading: '#cdd6f4',
+    border: '#313244',
+    borderLight: '#45475a',
+    inputBg: '#313244',
+    inputText: '#cdd6f4',
+    inputBorder: '#45475a',
+    tableHeaderBg: '#1e1e2e',
+    tableRowHover: '#2a2a3c',
+    tableStripeBg: '#181825',
+    statCardBg1: 'rgba(168, 85, 247, 0.1)',
+    statCardBg2: 'rgba(34, 197, 94, 0.1)',
+    statCardBg3: 'rgba(249, 115, 22, 0.1)',
+    statCardBg4: 'rgba(59, 130, 246, 0.1)',
+  } : {
+    pageBg: '#f9fafb',
+    cardBg: '#ffffff',
+    cardBgHover: '#f9fafb',
+    surfaceBg: '#f3f4f6',
+    text: '#374151',
+    textSecondary: '#6b7280',
+    textMuted: '#9ca3af',
+    heading: '#111827',
+    border: '#e5e7eb',
+    borderLight: '#f3f4f6',
+    inputBg: '#ffffff',
+    inputText: '#374151',
+    inputBorder: '#d1d5db',
+    tableHeaderBg: '#f9fafb',
+    tableRowHover: '#f3f4f6',
+    tableStripeBg: '#fafafa',
+    statCardBg1: '#faf5ff',
+    statCardBg2: '#f0fdf4',
+    statCardBg3: '#fff7ed',
+    statCardBg4: '#eff6ff',
+  };
+
   return (
-    <div dir={language === 'ar' ? 'rtl' : 'ltr'} className="min-h-screen bg-[#F3F4F6] p-6 md:p-8">
+    <div dir={language === 'ar' ? 'rtl' : 'ltr'} style={{ minHeight: '100vh', background: colors.pageBg, color: colors.text, padding: '24px 32px' }}>
       {/* Header */}
       <div className="max-w-7xl mx-auto mb-8">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-[#1F2937] mb-2">{translations[language].pageTitle}</h1>
-            <p className="text-sm text-[#6B7280]">{translations[language].pageSubtitle}</p>
+            <h1 style={{ fontSize: '1.875rem', fontWeight: 700, color: colors.heading, marginBottom: '0.5rem' }}>{translations[language].pageTitle}</h1>
+            <p style={{ fontSize: '0.875rem', color: colors.textSecondary }}>{translations[language].pageSubtitle}</p>
           </div>
           <Button onClick={() => setIsCreateModalOpen(true)} className="bg-[#7C3AED] text-white transition-all duration-300 hover:bg-gradient-to-r hover:from-purple-400 hover:via-pink-400 hover:to-orange-300">
             <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -368,10 +432,10 @@ export default function AutoRepliesPage() {
         {/* Overview Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {/* Card 1 - Active Replies */}
-          <div className="bg-white rounded-xl p-6 shadow-sm">
+          <div style={{ background: colors.cardBg, borderRadius: '0.75rem', padding: '1.5rem', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', border: '1px solid ' + colors.border }}>
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <div className="w-10 h-10 rounded-lg bg-purple-50 flex items-center justify-center mb-4">
+                <div className="w-10 h-10 rounded-lg flex items-center justify-center mb-4" style={{ background: colors.statCardBg1 }}>
                   <svg className="w-5 h-5 text-purple-400" fill="currentColor" viewBox="0 0 20 20">
                     <path
                       fillRule="evenodd"
@@ -380,8 +444,8 @@ export default function AutoRepliesPage() {
                     />
                   </svg>
                 </div>
-                <div className="text-3xl font-bold text-[#1F2937] mb-1">{totalActive}</div>
-                <div className="text-sm text-[#6B7280] mb-2">{translations[language].activeReplies}</div>
+                <div style={{ fontSize: '1.875rem', fontWeight: 700, color: colors.heading, marginBottom: '0.25rem' }}>{totalActive}</div>
+                <div style={{ fontSize: '0.875rem', color: colors.textSecondary, marginBottom: '0.5rem' }}>{translations[language].activeReplies}</div>
                 <div className="text-xs text-green-600 flex items-center gap-1">
                   <span>+2 {translations[language].thisWeek}</span>
                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -393,16 +457,16 @@ export default function AutoRepliesPage() {
           </div>
 
           {/* Card 2 - Sent Today */}
-          <div className="bg-white rounded-xl p-6 shadow-sm">
+          <div style={{ background: colors.cardBg, borderRadius: '0.75rem', padding: '1.5rem', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', border: '1px solid ' + colors.border }}>
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center mb-4">
+                <div className="w-10 h-10 rounded-lg flex items-center justify-center mb-4" style={{ background: colors.statCardBg4 }}>
                   <svg className="w-5 h-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
                     <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
                   </svg>
                 </div>
-                <div className="text-3xl font-bold text-[#1F2937] mb-1">{totalSentToday.toLocaleString()}</div>
-                <div className="text-sm text-[#6B7280] mb-2">{translations[language].sentToday}</div>
+                <div style={{ fontSize: '1.875rem', fontWeight: 700, color: colors.heading, marginBottom: '0.25rem' }}>{totalSentToday.toLocaleString()}</div>
+                <div style={{ fontSize: '0.875rem', color: colors.textSecondary, marginBottom: '0.5rem' }}>{translations[language].sentToday}</div>
                 <div className="text-xs text-green-600 flex items-center gap-1">
                   <span>+234</span>
                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -414,10 +478,10 @@ export default function AutoRepliesPage() {
           </div>
 
           {/* Card 3 - Success Rate */}
-          <div className="bg-white rounded-xl p-6 shadow-sm">
+          <div style={{ background: colors.cardBg, borderRadius: '0.75rem', padding: '1.5rem', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', border: '1px solid ' + colors.border }}>
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <div className="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center mb-4">
+                <div className="w-10 h-10 rounded-lg flex items-center justify-center mb-4" style={{ background: colors.statCardBg2 }}>
                   <svg className="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
                     <path
                       fillRule="evenodd"
@@ -426,8 +490,8 @@ export default function AutoRepliesPage() {
                     />
                   </svg>
                 </div>
-                <div className="text-3xl font-bold text-[#1F2937] mb-1">{successRate}%</div>
-                <div className="text-sm text-[#6B7280] mb-2">{translations[language].successRate}</div>
+                <div style={{ fontSize: '1.875rem', fontWeight: 700, color: colors.heading, marginBottom: '0.25rem' }}>{successRate}%</div>
+                <div style={{ fontSize: '0.875rem', color: colors.textSecondary, marginBottom: '0.5rem' }}>{translations[language].successRate}</div>
                 <div className="text-xs text-green-600">{translations[language].excellent}</div>
               </div>
             </div>
@@ -435,11 +499,12 @@ export default function AutoRepliesPage() {
         </div>
 
         {/* Filters */}
-        <div className="bg-white rounded-xl p-5 shadow-sm">
+        <div style={{ background: colors.cardBg, borderRadius: '0.75rem', padding: '1.25rem', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', border: '1px solid ' + colors.border }}>
           <div className="flex flex-col lg:flex-row gap-4">
             <div className="flex-1 lg:w-[40%] relative">
               <svg
-                className="w-5 h-5 text-gray-400 absolute right-3 top-1/2 -translate-y-1/2"
+                className="w-5 h-5 absolute right-3 top-1/2 -translate-y-1/2"
+                style={{ color: colors.textMuted }}
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -451,42 +516,67 @@ export default function AutoRepliesPage() {
                   d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
                 />
               </svg>
-              <Input
+              <input
                 placeholder={translations[language].searchPlaceholder}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pr-10"
+                style={{
+                  width: '100%',
+                  padding: '0.5rem 2.5rem 0.5rem 0.75rem',
+                  borderRadius: '0.375rem',
+                  border: '1px solid ' + colors.inputBorder,
+                  background: colors.inputBg,
+                  color: colors.inputText,
+                  fontSize: '0.875rem',
+                  outline: 'none',
+                }}
               />
             </div>
 
             <div className="lg:w-[20%]">
-              <Select value={platformFilter} onValueChange={setPlatformFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="المنصة" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{translations[language].allPlatforms}</SelectItem>
-                  <SelectItem value="instagram">Instagram</SelectItem>
-                  <SelectItem value="facebook">Facebook</SelectItem>
-                  <SelectItem value="both">{translations[language].both}</SelectItem>
-                </SelectContent>
-              </Select>
+              <select
+                value={platformFilter}
+                onChange={(e) => setPlatformFilter(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '0.5rem 0.75rem',
+                  borderRadius: '0.375rem',
+                  border: '1px solid ' + colors.inputBorder,
+                  background: colors.inputBg,
+                  color: colors.inputText,
+                  fontSize: '0.875rem',
+                  outline: 'none',
+                }}
+              >
+                <option value="all">{translations[language].allPlatforms}</option>
+                <option value="instagram">Instagram</option>
+                <option value="facebook">Facebook</option>
+                <option value="both">{translations[language].both}</option>
+              </select>
             </div>
 
             <div className="lg:w-[20%]">
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="الحالة" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{translations[language].allStatus}</SelectItem>
-                  <SelectItem value="active">{translations[language].active}</SelectItem>
-                  <SelectItem value="inactive">{translations[language].inactive}</SelectItem>
-                </SelectContent>
-              </Select>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '0.5rem 0.75rem',
+                  borderRadius: '0.375rem',
+                  border: '1px solid ' + colors.inputBorder,
+                  background: colors.inputBg,
+                  color: colors.inputText,
+                  fontSize: '0.875rem',
+                  outline: 'none',
+                }}
+              >
+                <option value="all">{translations[language].allStatus}</option>
+                <option value="active">{translations[language].active}</option>
+                <option value="inactive">{translations[language].inactive}</option>
+              </select>
             </div>
 
-            <Button variant="outline" onClick={clearFilters} className="lg:w-auto bg-transparent">
+            <Button variant="outline" onClick={clearFilters} className="lg:w-auto bg-transparent" style={{ borderColor: colors.border, color: colors.text }}>
               <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
@@ -497,45 +587,74 @@ export default function AutoRepliesPage() {
 
         {/* Table */}
         {filteredReplies.length > 0 ? (
-          <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+          <div style={{ background: colors.cardBg, borderRadius: '0.75rem', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', border: '1px solid ' + colors.border, overflow: 'hidden' }}>
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
+                <thead style={{ background: colors.tableHeaderBg, borderBottom: '1px solid ' + colors.border }}>
                   <tr>
-                    <th className="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider w-[40%]">
+                    <th className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider w-[40%]" style={{ color: colors.textSecondary }}>
                       {translations[language].nameAndKeywords}
                     </th>
-                    <th className="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider w-[15%]">
+                    <th className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider w-[15%]" style={{ color: colors.textSecondary }}>
                       {translations[language].platformCol}
                     </th>
-                    <th className="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider w-[15%]">
+                    <th className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider w-[15%]" style={{ color: colors.textSecondary }}>
                       {translations[language].statusCol}
                     </th>
-                    <th className="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider w-[20%]">
+                    <th className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider w-[20%]" style={{ color: colors.textSecondary }}>
                       {translations[language].stats}
                     </th>
-                    <th className="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider w-[10%]">
+                    <th className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider w-[10%]" style={{ color: colors.textSecondary }}>
                       {translations[language].actions}
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {filteredReplies.map((reply) => (
-                    <tr key={reply.id} className="hover:bg-gray-50 transition-colors">
+                <tbody style={{ borderTop: '1px solid ' + colors.border }}>
+                  {filteredReplies.map((reply, index) => (
+                    <tr
+                      key={reply.id}
+                      style={{
+                        borderBottom: '1px solid ' + colors.border,
+                        background: index % 2 === 0 ? colors.cardBg : colors.tableStripeBg,
+                        transition: 'background 0.15s',
+                      }}
+                      onMouseEnter={(e) => { (e.currentTarget as HTMLTableRowElement).style.background = colors.tableRowHover }}
+                      onMouseLeave={(e) => { (e.currentTarget as HTMLTableRowElement).style.background = index % 2 === 0 ? colors.cardBg : colors.tableStripeBg }}
+                    >
                       {/* Name & Keywords */}
                       <td className="px-6 py-4">
-                        <div className="font-semibold text-[#1F2937] mb-2">{reply.name}</div>
+                        <div style={{ fontWeight: 600, color: colors.text, marginBottom: '0.5rem' }}>{reply.name}</div>
                         <div className="flex flex-wrap gap-2">
                           {reply.keywords.slice(0, 3).map((keyword, idx) => (
                             <span
                               key={idx}
-                              className="inline-flex items-center px-2.5 py-1 rounded-full text-xs bg-[#F3F4F6] border border-[#E5E7EB] text-[#6B7280]"
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                padding: '0.25rem 0.625rem',
+                                borderRadius: '9999px',
+                                fontSize: '0.75rem',
+                                background: colors.surfaceBg,
+                                border: '1px solid ' + colors.borderLight,
+                                color: colors.textSecondary,
+                              }}
                             >
                               {keyword}
                             </span>
                           ))}
                           {reply.keywords.length > 3 && (
-                            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs bg-[#F3F4F6] border border-[#E5E7EB] text-[#6B7280]">
+                            <span
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                padding: '0.25rem 0.625rem',
+                                borderRadius: '9999px',
+                                fontSize: '0.75rem',
+                                background: colors.surfaceBg,
+                                border: '1px solid ' + colors.borderLight,
+                                color: colors.textSecondary,
+                              }}
+                            >
                               +{reply.keywords.length - 3} {translations[language].moreKeywords}
                             </span>
                           )}
@@ -589,7 +708,7 @@ export default function AutoRepliesPage() {
                       {/* Stats */}
                       <td className="px-6 py-4">
                         <div className="space-y-1 text-xs">
-                          <div className="text-gray-600">{translations[language].triggered} {reply.stats.triggered}</div>
+                          <div style={{ color: colors.textSecondary }}>{translations[language].triggered} {reply.stats.triggered}</div>
                           <div className="text-green-600">{translations[language].sent} {reply.stats.sent}</div>
                           {reply.stats.failed > 0 && <div className="text-red-600">{translations[language].failed} {reply.stats.failed}</div>}
                         </div>
@@ -599,8 +718,8 @@ export default function AutoRepliesPage() {
                       <td className="px-6 py-4">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                              <svg className="w-5 h-5 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
+                            <button className="p-2 rounded-lg transition-colors" style={{ color: colors.textSecondary }} onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = colors.surfaceBg }} onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent' }}>
+                              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                                 <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
                               </svg>
                             </button>
@@ -683,8 +802,8 @@ export default function AutoRepliesPage() {
           </div>
         ) : (
           /* Empty State */
-          <div className="bg-white rounded-xl shadow-sm py-16 px-6 text-center">
-            <svg className="w-24 h-24 text-gray-300 mx-auto mb-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div style={{ background: colors.cardBg, borderRadius: '0.75rem', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', border: '1px solid ' + colors.border, padding: '4rem 1.5rem', textAlign: 'center' }}>
+            <svg className="w-24 h-24 mx-auto mb-6" style={{ color: colors.textMuted }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -692,8 +811,8 @@ export default function AutoRepliesPage() {
                 d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
               />
             </svg>
-            <h3 className="text-2xl font-bold text-[#1F2937] mb-2">{translations[language].noReplies}</h3>
-            <p className="text-sm text-[#6B7280] mb-6">{translations[language].noRepliesSubtitle}</p>
+            <h3 style={{ fontSize: '1.5rem', fontWeight: 700, color: colors.heading, marginBottom: '0.5rem' }}>{translations[language].noReplies}</h3>
+            <p style={{ fontSize: '0.875rem', color: colors.textSecondary, marginBottom: '1.5rem' }}>{translations[language].noRepliesSubtitle}</p>
             <Button onClick={() => setIsCreateModalOpen(true)} className="bg-[#7C3AED] text-white transition-all duration-300 hover:bg-gradient-to-r hover:from-purple-400 hover:via-pink-400 hover:to-orange-300">
               <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
