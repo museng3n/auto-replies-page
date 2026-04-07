@@ -125,6 +125,11 @@
   }
 }
 
+html.dark,
+html.dark body {
+  background-color: #1e1e2e;
+}
+
 /* Added shimmer animation for loading states */
 @keyframes shimmer {
   0% {
